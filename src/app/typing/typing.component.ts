@@ -1,15 +1,26 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit, ViewChild, ElementRef, WritableSignal, computed, signal, AfterViewInit } from '@angular/core';
+import { CommonModule, NgClass, NgIf } from '@angular/common';
 import { Subscription, interval } from 'rxjs';
+
+type Theme = 'dark' | 'green' | 'space';
+type WordState = 'default' | 'correct' | 'incorrect' | 'active';
 
 @Component({
   selector: 'app-typing',
   standalone: true,
-  imports: [CommonModule],
-  templateUrl: './typing.component.html',
+  imports: [CommonModule, NgClass, NgIf], // NgIf might be useful later, but NgClass is the key here
+  templateUrl: './typing.component.html', // Assuming you'll display level/points in HTML
   styleUrl: './typing.component.scss',
 })
-export class TypingComponent implements OnInit, OnDestroy {
+export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
+  // --- Theme Management ---
+  private themes: Theme[] = ['dark', 'green', 'space'];
+  private currentThemeIndex = 0;
+  currentTheme = signal<Theme>(this.themes[this.currentThemeIndex]);
+
+  // Reference to the textarea element
+  @ViewChild('typingInput') typingInput!: ElementRef<HTMLTextAreaElement>;
+
   // A collection of texts for the test
   private textSnippets = [
     'The quick brown fox jumps over the lazy dog. This is a sample text for the typing speed test. Good luck!',
@@ -21,19 +32,65 @@ export class TypingComponent implements OnInit, OnDestroy {
 
   // The text the user needs to type
   textToType = signal(this.textSnippets[this.currentTextIndex]);
+  // An array of signals to hold the state of each word for reactive styling
+  wordStates: WritableSignal<WordState>[] = [];
+  // A computed signal for the words array to avoid splitting on every change detection
+  words = computed(() => this.textToType().split(' '));
+
   // State for the typing test
   timeLeft = signal(60);
   timerRunning = signal(false);
   testFinished = signal(false);
   wpm = signal(0);
   accuracy = signal(0);
+  
+  // Leveling System State
+  currentLevel = signal(1);
+  currentPoints = signal(0);
+  pointsForNextLevel = signal(0); // Will be initialized in ngOnInit
+
+  // Leveling System Configuration
+  private BASE_POINTS_FOR_LEVEL_2 = 100; // Points needed to reach Level 2 (from Level 1)
+  private LEVEL_THRESHOLD_MULTIPLIER = 1.5; // How much harder each subsequent level is
+
+  // Letter values for scoring (Scrabble-like)
+  private readonly LETTER_VALUES: { [key: string]: number } = {
+    'A': 1, 'E': 1, 'I': 1, 'O': 1, 'U': 1, 'L': 1, 'N': 1, 'R': 1, 'S': 1, 'T': 1,
+    'D': 2, 'G': 2,
+    'B': 3, 'C': 3, 'M': 3, 'P': 3,
+    'F': 4, 'H': 4, 'V': 4, 'W': 4, 'Y': 4,
+    'K': 5,
+    'J': 8, 'X': 8,
+    'Q': 10, 'Z': 10,
+  };
+  private readonly MIN_WORD_LENGTH_FOR_POINTS = 3;
+  private readonly LENGTH_BONUS_PER_EXTRA_LETTER = 0.15;
 
   private timerSubscription: Subscription | undefined;
   private correctWordsCount = 0;
   private totalWordsTyped = 0;
 
+  // Helper for logging (can be removed in production)
+  private logStatus(): void {
+    console.log(
+      `Level: ${this.currentLevel()} | ` +
+      `Points: ${this.currentPoints()} / ${this.pointsForNextLevel()} | ` +
+      `WPM: ${this.wpm()} | ` +
+      `Accuracy: ${this.accuracy()}%`
+    );
+  }
+
   ngOnInit(): void {
     this.resetTest();
+    this.initializeWordStates();
+    // Initialize points needed for the first level-up
+    this.updatePointsForNextLevel();
+    this.logStatus();
+  }
+
+  ngAfterViewInit(): void {
+    // Ensure the input is focused after the view has been initialized.
+    this.typingInput.nativeElement.focus();
   }
 
   onInput(event: Event): void {
@@ -51,7 +108,7 @@ export class TypingComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.updateWordStyles(inputValue);
+    this.processInput(inputValue);
 
     // Check if the user has completed the text
     if (inputValue.length >= this.textToType().length) {
@@ -86,44 +143,34 @@ export class TypingComponent implements OnInit, OnDestroy {
     this.accuracy.set(Math.round(accuracyValue));
   }
 
-  private updateWordStyles(inputValue: string): void {
-    const originalWords = this.textToType().split(' ');
+  private processInput(inputValue: string): void {
+    const originalWords = this.words();
     const typedWords = inputValue.trim().split(/\s+/);
-
     const currentWordIndex = typedWords.length - 1;
 
-    originalWords.forEach((originalWord, index) => {
-      const span = document.querySelector(`.word-${index}`) as HTMLElement;
-      if (span) {
-        const typedWord = typedWords[index];
-        let className = `word word-${index}`;
+    this.wordStates.forEach((state, index) => {
+      const originalWord = originalWords[index];
+      const typedWord = typedWords[index];
 
-        if (typedWord === undefined) {
-          // Word has not been reached yet.
-        } else if (index < currentWordIndex || (index === currentWordIndex && inputValue.endsWith(' '))) {
-          // This is a completed word (not the active one).
-          if (typedWord === originalWord) {
-            className += ' correct';
-          } else {
-            className += ' incorrect';
-          }
+      if (typedWord === undefined && index > 0) {
+        state.set('default'); // Not yet typed
+      } else if (index < currentWordIndex || (index === currentWordIndex && inputValue.endsWith(' '))) {
+        // Completed word
+        state.set(typedWord === originalWord ? 'correct' : 'incorrect');
+      } else if (index === currentWordIndex) {
+        // Active word
+        if (originalWord.startsWith(typedWord)) {
+          state.set('active');
         } else {
-          // This is the active word being typed.
-          className += ' active';
-          if (!originalWord.startsWith(typedWord)) {
-            // The user has typed something that makes the word incorrect.
-            className += ' incorrect';
-          }
+          state.set('incorrect');
         }
-
-        // The very first word needs the 'active' class before any input.
-        if (index === 0 && inputValue.trim() === '') {
-          className = `word word-0 active`;
-        }
-
-        span.className = className;
       }
     });
+
+    // Set first word to active if input is empty
+    if (inputValue.trim() === '' && this.wordStates.length > 0) {
+      this.wordStates[0].set('active');
+    }
 
     // Update the total correct words count only after a word is fully typed (space is pressed)
     if (inputValue.endsWith(' ')) {
@@ -134,25 +181,74 @@ export class TypingComponent implements OnInit, OnDestroy {
         const typedWord = typedWords[lastTypedWordIndex];
         if (originalWord === typedWord) {
           this.correctWordsCount++;
+          // Award points for the successfully typed word
+          const pointsGained = this.calculatePointsForWord(originalWord);
+          this.currentPoints.update(points => points + pointsGained);
+          console.log(`+${pointsGained} points for '${originalWord}'`);
+          this.checkLevelUp();
         }
       }
     }
+  }
+
+  /**
+   * Calculates the points for a given word based on letter rarity and length bonus.
+   * This defines the "typing context" for scoring.
+   * @param word The word to score.
+   * @returns The points awarded for the word.
+   */
+  private calculatePointsForWord(word: string): number {
+    if (!word || word.trim().length < this.MIN_WORD_LENGTH_FOR_POINTS) {
+      return 0; // Words too short don't get points
+    }
+
+    const upperWord = word.toUpperCase();
+    let baseScore = 0;
+    for (const char of upperWord) {
+      baseScore += this.LETTER_VALUES[char] || 0; // Default to 0 for non-alphabetic or unknown chars
+    }
+
+    // Apply a length bonus: longer words are worth more than just the sum of their letters.
+    const lengthBonusFactor = 1.0 + (upperWord.length - this.MIN_WORD_LENGTH_FOR_POINTS) * this.LENGTH_BONUS_PER_EXTRA_LETTER;
+    
+    const finalScore = Math.floor(baseScore * lengthBonusFactor);
+    return Math.max(1, finalScore); // Ensure a minimum of 1 point for valid words
+  }
+
+  private checkLevelUp(): void {
+    while (this.currentPoints() >= this.pointsForNextLevel()) {
+      console.log(`---------------------------------`);
+      console.log(`LEVEL UP! You've reached Level ${this.currentLevel() + 1}!`);
+      console.log(`---------------------------------`);
+      this.currentLevel.update(level => level + 1);
+      this.currentPoints.update(points => points - this.pointsForNextLevel()); // Carry over excess points
+      this.updatePointsForNextLevel();
+    }
+    this.logStatus();
   }
 
   private loadNextText(inputElement: HTMLTextAreaElement): void {
     this.currentTextIndex = (this.currentTextIndex + 1) % this.textSnippets.length;
     this.textToType.set(this.textSnippets[this.currentTextIndex]);
     inputElement.value = '';
+    this.initializeWordStates();
+  }
 
-    // Reset styles for the new text
-    // A timeout ensures the DOM has updated with the new words
-    setTimeout(() => {
-      // Trigger a style update for the new, empty text state
-      this.updateWordStyles('');
-    }, 0);
+  private initializeWordStates(): void {
+    this.wordStates = this.words().map(() => signal<WordState>('default'));
+    if (this.wordStates.length > 0) {
+      this.wordStates[0].set('active'); // Set the first word to active
+    }
   }
 
   resetTest(): void {
+    // Stop any running timer
+    this.timerSubscription?.unsubscribe();
+    this.timerRunning.set(false);
+
+    // Reset leveling state
+    this.currentLevel.set(1);
+    this.currentPoints.set(0);
     this.currentTextIndex = 0;
     this.textToType.set(this.textSnippets[this.currentTextIndex]);
     this.timeLeft.set(60);
@@ -160,11 +256,31 @@ export class TypingComponent implements OnInit, OnDestroy {
     this.testFinished.set(false);
     this.wpm.set(0);
     this.accuracy.set(0);
-    this.timerSubscription?.unsubscribe();
     this.correctWordsCount = 0;
     this.totalWordsTyped = 0;
+    
+    this.initializeWordStates();
+    this.updatePointsForNextLevel(); // Recalculate points for next level based on new currentLevel
+    this.logStatus();
 
-    // You would also clear the textarea and reset word styles here
+    // Focus the input field after resetting
+    setTimeout(() => this.typingInput.nativeElement.focus(), 0);
+  }
+
+  /**
+   * Calculates the points required to reach a specific level from the start of the previous level.
+   * @param targetLevel The level for which to calculate the threshold (e.g., 2 for the first level-up).
+   * @returns The total points required to go from (targetLevel - 1) to targetLevel.
+   */
+  private getPointsRequiredForLevel(targetLevel: number): number {
+    if (targetLevel <= 1) return 0; // No points needed to be at Level 1
+    // Level 2 needs BASE_POINTS_FOR_LEVEL_2 (multiplier power 0)
+    return Math.floor(this.BASE_POINTS_FOR_LEVEL_2 * Math.pow(this.LEVEL_THRESHOLD_MULTIPLIER, targetLevel - 2));
+  }
+
+  private updatePointsForNextLevel(): void {
+    const pointsNeeded = this.getPointsRequiredForLevel(this.currentLevel() + 1);
+    this.pointsForNextLevel.set(pointsNeeded);
   }
 
   ngOnDestroy(): void {

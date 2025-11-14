@@ -11,6 +11,7 @@
 
   .stats {
     display: flex;
+    flex-wrap: wrap;
     gap: 2rem;
     margin-bottom: 2rem;
     font-size: 1.2rem;
@@ -19,6 +20,12 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      margin-left: auto; // Pushes buttons to the right
     }
   }
 
@@ -39,16 +46,37 @@
   }
 
   .input-area {
+    width: 100%;
+    max-width: 800px;
+    margin-top: 2rem;
+
     textarea {
-      opacity: 0;
-      position: absolute;
-      z-index: -1;
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.2rem;
+      border-radius: 8px;
+      border: 1px solid var(--text-color); // Use theme color for border
+      background-color: var(--active-bg); // Use theme color for background
+      color: var(--text-color);
+      resize: none; // Prevent manual resizing
+      outline: none; // Remove outline on focus
     }
   }
 
   .theme-button {
     padding: 8px 16px;
     border: 1px solid;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  .reset-button {
+    padding: 8px 16px;
+    border: 1px solid var(--incorrect-color);
+    color: var(--incorrect-color);
+    background-color: transparent;
     border-radius: 4px;
     cursor: pointer;
     font-family: inherit;
@@ -77,6 +105,10 @@
   }
 
   .theme-button { background-color: transparent; color: var(--text-color); border-color: var(--button-border); &:hover { background-color: var(--active-bg); } }
+  .reset-button:hover {
+    background-color: var(--incorrect-color);
+    color: var(--bg-color);
+  }
 }
 
 // 2. Green Theme
@@ -98,6 +130,10 @@
   }
 
   .theme-button { background-color: transparent; color: var(--text-color); border-color: var(--button-border); &:hover { background-color: var(--active-bg); } }
+  .reset-button:hover {
+    background-color: var(--incorrect-color);
+    color: white;
+  }
 }
 
 // 3. Space Theme
@@ -119,4 +155,8 @@
   }
 
   .theme-button { background-color: transparent; color: var(--text-color); border-color: var(--button-border); &:hover { background-color: var(--active-bg); } }
+  .reset-button:hover {
+    background-color: var(--incorrect-color);
+    color: white;
+  }
 }
