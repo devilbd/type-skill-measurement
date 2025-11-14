@@ -1,0 +1,28 @@
+<div class="typing-component-root">
+  <div class="stats">
+    <div class="stat-item">
+      <span>Time Left:</span>
+      <strong>{{ timeLeft() }}s</strong>
+    </div>
+    @if (testFinished()) {
+      <div class="stat-item">
+        <span>WPM:</span>
+        <strong>{{ wpm() }}</strong>
+      </div>
+      <div class="stat-item">
+        <span>Accuracy:</span>
+        <strong>{{ accuracy() }}%</strong>
+      </div>
+    }
+  </div>
+
+  <div class="text-display">
+    @for (word of textToType().split(' '); track $index) {
+      <span class="word word-{{$index}}">{{ word }}</span>
+    }
+  </div>
+
+  <div class="input-area">
+    <textarea (input)="onInput($event)" placeholder="Start typing here..." [disabled]="testFinished()"></textarea>
+  </div>
+</div>
