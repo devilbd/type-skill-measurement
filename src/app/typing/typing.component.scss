@@ -1,0 +1,122 @@
+// Base styles that are common across all themes
+.typing-component-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  font-family: "Roboto Mono", monospace;
+  height: 100vh;
+  box-sizing: border-box;
+  transition: background-color 0.3s, color 0.3s;
+
+  .stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    font-size: 1.2rem;
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+
+  .text-display {
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+    margin-bottom: 2rem;
+    max-width: 900px;
+    line-height: 2.5rem;
+    text-align: justify;
+
+    .word {
+      margin-right: 0.75rem; // Space between words
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: background-color 0.2s, color 0.2s;
+    }
+  }
+
+  .input-area {
+    textarea {
+      opacity: 0;
+      position: absolute;
+      z-index: -1;
+    }
+  }
+
+  .theme-button {
+    padding: 8px 16px;
+    border: 1px solid;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background-color 0.2s, color 0.2s;
+  }
+}
+
+// --- Theme Definitions ---
+
+// 1. Dark Theme (Default)
+.dark {
+  --bg-color: #282c34;
+  --text-color: #abb2bf;
+  --correct-color: #98c379;
+  --incorrect-color: #e06c75;
+  --active-bg: #4b5263;
+  --button-border: #abb2bf;
+
+  background-color: var(--bg-color);
+  color: var(--text-color);
+
+  .text-display {
+    .word.correct { color: var(--correct-color); }
+    .word.incorrect { background-color: var(--incorrect-color); color: var(--bg-color); }
+    .word.active { background-color: var(--active-bg); }
+  }
+
+  .theme-button { background-color: transparent; color: var(--text-color); border-color: var(--button-border); &:hover { background-color: var(--active-bg); } }
+}
+
+// 2. Green Theme
+.green {
+  --bg-color: #eaf4e8;
+  --text-color: #3a4a39;
+  --correct-color: #4caf50;
+  --incorrect-color: #f44336;
+  --active-bg: #c8e6c9;
+  --button-border: #3a4a39;
+
+  background-color: var(--bg-color);
+  color: var(--text-color);
+
+  .text-display {
+    .word.correct { color: var(--correct-color); }
+    .word.incorrect { background-color: var(--incorrect-color); color: white; }
+    .word.active { background-color: var(--active-bg); }
+  }
+
+  .theme-button { background-color: transparent; color: var(--text-color); border-color: var(--button-border); &:hover { background-color: var(--active-bg); } }
+}
+
+// 3. Space Theme
+.space {
+  --bg-color: #0d1117;
+  --text-color: #c9d1d9;
+  --correct-color: #58a6ff;
+  --incorrect-color: #f85149;
+  --active-bg: #222b38;
+  --button-border: #58a6ff;
+
+  background-color: var(--bg-color);
+  color: var(--text-color);
+
+  .text-display {
+    .word.correct { color: var(--correct-color); }
+    .word.incorrect { background-color: var(--incorrect-color); color: white; }
+    .word.active { background-color: var(--active-bg); }
+  }
+
+  .theme-button { background-color: transparent; color: var(--text-color); border-color: var(--button-border); &:hover { background-color: var(--active-bg); } }
+}
