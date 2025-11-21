@@ -4,7 +4,8 @@
   flex-direction: column;
   align-items: center;
   padding: 2rem;
-  font-family: "Roboto Mono", monospace;
+  /* Prioritize common Linux mono fonts, with fallbacks for other OSs */
+  font-family: "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Source Code Pro", Menlo, Consolas, Monaco, monospace;
   min-height: 100vh; // Ensure full height
   box-sizing: border-box;
   transition: background-color 0.3s, color 0.3s;
