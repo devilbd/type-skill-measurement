@@ -176,13 +176,6 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
     if (targetWord.startsWith(currentInput)) {
       state.set('active');
     } else {
-      state.set('incorrect'); // Or keep active but maybe style differently? 
-      // Let's keep it 'active' but maybe we can add a 'partial-incorrect' state later if requested.
-      // For now, if it doesn't match prefix, it's technically incorrect so far, 
-      // but usually we just show it as active until space is pressed.
-      // However, the user might want immediate feedback.
-      // Let's stick to 'active' for the current word being typed, 
-      // or 'incorrect' if they made a typo.
       state.set('incorrect');
     }
   }
