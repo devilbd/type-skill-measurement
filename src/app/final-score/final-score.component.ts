@@ -1,9 +1,9 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule, NgClass } from '@angular/common';
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'app-final-score',
-    imports: [CommonModule, NgClass],
+    imports: [CommonModule],
     templateUrl: './final-score.component.html', // Assuming you'll display level/points in HTML
     styleUrl: './final-score.component.scss',
 })
