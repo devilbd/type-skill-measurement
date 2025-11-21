@@ -7,7 +7,6 @@ type WordState = 'default' | 'correct' | 'incorrect' | 'active';
 
 @Component({
   selector: 'app-typing',
-  standalone: true,
   imports: [CommonModule, NgClass],
   templateUrl: './typing.component.html', // Assuming you'll display level/points in HTML
   styleUrl: './typing.component.scss',
