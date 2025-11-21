@@ -5,9 +5,37 @@
   align-items: center;
   padding: 2rem;
   font-family: "Roboto Mono", monospace;
-  height: 100vh;
+  min-height: 100vh; // Ensure full height
   box-sizing: border-box;
   transition: background-color 0.3s, color 0.3s;
+  width: 100%; // Ensure full width
+  max-width: 1200px; // Increase max width for better layout
+
+  .app-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+    text-align: center;
+
+    .logo {
+      width: 200px; // Increased size further
+      height: 200px; // Increased size further
+      margin-bottom: 1rem;
+      // filter: drop-shadow(0 0 10px var(--primary-glow)); // Removed shadow
+      // border-radius: 50%; // Removed circular crop
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin: 0;
+      color: var(--text-color);
+      text-shadow: 0 0 15px var(--primary-glow);
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+  }
 
   .stats {
     display: flex;
@@ -15,148 +43,176 @@
     gap: 2rem;
     margin-bottom: 2rem;
     font-size: 1.2rem;
+    width: 100%;
+    justify-content: space-between; // Spread out stats
+    padding: 1.5rem;
+
+    // Glassmorphism for stats container
+    background: var(--surface-color);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 16px;
 
     .stat-item {
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      color: var(--subtext-color);
+
+      strong {
+        color: var(--primary-color);
+        text-shadow: 0 0 8px var(--primary-glow); // Glow effect
+        font-size: 1.4rem;
+      }
+    }
+
+    .level-status {
+      display: flex;
+      gap: 2rem;
+
+      p {
+        color: var(--secondary-color);
+        text-shadow: 0 0 8px var(--secondary-glow);
+        font-weight: bold;
+      }
     }
 
     .action-buttons {
       display: flex;
       gap: 1rem;
-      margin-left: auto; // Pushes buttons to the right
     }
   }
 
   .text-display {
-    font-size: 1.5rem;
-    letter-spacing: 1px;
+    font-size: 1.6rem; // Slightly larger
+    letter-spacing: 1.5px;
     margin-bottom: 2rem;
-    max-width: 900px;
-    line-height: 2.5rem;
-    text-align: justify;
+    width: 100%;
+    line-height: 2.8rem;
+    text-align: left; // Better for reading code/text
+
+    // Glassmorphism for text display
+    position: relative; // Ensure offset parent behavior
+    background: var(--surface-color);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 16px;
+    padding: 2rem;
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem; // Use gap for spacing instead of margin
+    align-content: flex-start; // Ensure content starts from top
+
+    max-height: 30vh; // Reduced height as requested
+    overflow-y: auto;
+    overflow-x: hidden; // Ensure no horizontal scroll
+    // white-space: pre-wrap; // Removed to allow flex wrapping
 
     .word {
-      margin-right: 0.75rem; // Space between words
-      padding: 2px 4px;
-      border-radius: 4px;
-      transition: background-color 0.2s, color 0.2s;
+      // margin-right: 0.8rem; // Removed in favor of gap
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      color: var(--subtext-color);
+
+      &.active {
+        background-color: var(--primary-glow);
+        color: #fff;
+        box-shadow: 0 0 10px var(--primary-glow);
+        transform: scale(1.05); // Subtle pop
+      }
+
+      &.correct {
+        color: var(--correct-color);
+        text-shadow: 0 0 5px var(--correct-glow);
+      }
+
+      &.incorrect {
+        color: var(--incorrect-color);
+        text-decoration: underline;
+        text-decoration-style: wavy;
+        text-shadow: 0 0 5px var(--incorrect-glow);
+      }
     }
   }
 
   .input-area {
     width: 100%;
-    max-width: 800px;
-    margin-top: 2rem;
+    margin-top: 1rem;
 
     textarea {
       width: 100%;
-      padding: 1rem;
-      font-size: 1.2rem;
-      border-radius: 8px;
-      border: 1px solid var(--text-color); // Use theme color for border
-      background-color: var(--active-bg); // Use theme color for background
+      height: 200px; // Increased height as requested
+      padding: 1.5rem;
+      font-size: 1.4rem;
+      border-radius: 16px;
+
+      // Glassmorphism for input
+      background: var(--surface-color);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: var(--glass-border);
       color: var(--text-color);
-      resize: none; // Prevent manual resizing
-      outline: none; // Remove outline on focus
+
+      resize: none;
+      outline: none;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+
+      // Fix for horizontal scrollbar and wrapping
+      white-space: pre-wrap;
+      overflow-x: hidden;
+      overflow-y: auto;
+
+      &:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 15px var(--primary-glow), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
     }
   }
 
-  .theme-button {
-    padding: 8px 16px;
-    border: 1px solid;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background-color 0.2s, color 0.2s;
-  }
-
   .reset-button {
-    padding: 8px 16px;
+    padding: 10px 20px;
     border: 1px solid var(--incorrect-color);
     color: var(--incorrect-color);
-    background-color: transparent;
-    border-radius: 4px;
+    background-color: rgba(255, 0, 85, 0.1);
+    border-radius: 8px;
     cursor: pointer;
     font-family: inherit;
-    transition: background-color 0.2s, color 0.2s;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+
+    &:hover {
+      background-color: var(--incorrect-color);
+      color: #fff;
+      box-shadow: 0 0 15px var(--incorrect-glow);
+    }
   }
 }
 
-// --- Theme Definitions ---
+// --- Theme Definitions (Overrides if needed, but 'dark' is now default shiny) ---
 
-// 1. Dark Theme (Default)
-.dark {
-  --bg-color: #282c34;
-  --text-color: #abb2bf;
-  --correct-color: #98c379;
-  --incorrect-color: #e06c75;
-  --active-bg: #4b5263;
-  --button-border: #abb2bf;
+// 1. Dark Theme (Matches Global Shiny)
+// .dark inherits global variables by default
 
-  background-color: var(--bg-color);
-  color: var(--text-color);
-
-  .text-display {
-    .word.correct { color: var(--correct-color); }
-    .word.incorrect { background-color: var(--incorrect-color); color: var(--bg-color); }
-    .word.active { background-color: var(--active-bg); }
-  }
-
-  .theme-button { background-color: transparent; color: var(--text-color); border-color: var(--button-border); &:hover { background-color: var(--active-bg); } }
-  .reset-button:hover {
-    background-color: var(--incorrect-color);
-    color: var(--bg-color);
-  }
-}
-
-// 2. Green Theme
+// 2. Green Theme (Optional: Override variables for green theme)
 .green {
-  --bg-color: #eaf4e8;
-  --text-color: #3a4a39;
-  --correct-color: #4caf50;
-  --incorrect-color: #f44336;
-  --active-bg: #c8e6c9;
-  --button-border: #3a4a39;
-
-  background-color: var(--bg-color);
-  color: var(--text-color);
-
-  .text-display {
-    .word.correct { color: var(--correct-color); }
-    .word.incorrect { background-color: var(--incorrect-color); color: white; }
-    .word.active { background-color: var(--active-bg); }
-  }
-
-  .theme-button { background-color: transparent; color: var(--text-color); border-color: var(--button-border); &:hover { background-color: var(--active-bg); } }
-  .reset-button:hover {
-    background-color: var(--incorrect-color);
-    color: white;
-  }
+  --primary-color: #00ff9d;
+  --primary-glow: rgba(0, 255, 157, 0.5);
+  // ... other overrides
 }
 
-// 3. Space Theme
-.space {
-  --bg-color: #0d1117;
-  --text-color: #c9d1d9;
-  --correct-color: #58a6ff;
-  --incorrect-color: #f85149;
-  --active-bg: #222b38;
-  --button-border: #58a6ff;
-
-  background-color: var(--bg-color);
-  color: var(--text-color);
-
-  .text-display {
-    .word.correct { color: var(--correct-color); }
-    .word.incorrect { background-color: var(--incorrect-color); color: white; }
-    .word.active { background-color: var(--active-bg); }
-  }
-
-  .theme-button { background-color: transparent; color: var(--text-color); border-color: var(--button-border); &:hover { background-color: var(--active-bg); } }
-  .reset-button:hover {
-    background-color: var(--incorrect-color);
-    color: white;
-  }
-}
+// 3. Space Theme (Optional)
+// .space inherits global variables or can be customized later

@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, ViewChild, ElementRef, WritableSignal, computed, signal, AfterViewInit } from '@angular/core';
-import { CommonModule, NgClass, NgIf } from '@angular/common';
+import { Component, OnDestroy, OnInit, ViewChild, ViewChildren, ElementRef, WritableSignal, computed, signal, AfterViewInit, QueryList } from '@angular/core';
+import { CommonModule, NgClass } from '@angular/common';
 import { Subscription, interval } from 'rxjs';
 
 type Theme = 'dark' | 'green' | 'space';
@@ -8,7 +8,7 @@ type WordState = 'default' | 'correct' | 'incorrect' | 'active';
 @Component({
   selector: 'app-typing',
   standalone: true,
-  imports: [CommonModule, NgClass, NgIf], // NgIf might be useful later, but NgClass is the key here
+  imports: [CommonModule, NgClass],
   templateUrl: './typing.component.html', // Assuming you'll display level/points in HTML
   styleUrl: './typing.component.scss',
 })
@@ -20,13 +20,15 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Reference to the textarea element
   @ViewChild('typingInput') typingInput!: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('textDisplay') textDisplay!: ElementRef<HTMLDivElement>;
+  @ViewChildren('wordElement') wordElements!: QueryList<ElementRef<HTMLSpanElement>>;
 
   // A collection of texts for the test
   private textSnippets = [
-    'The quick brown fox jumps over the lazy dog. This is a sample text for the typing speed test. Good luck!',
-    'Never underestimate the power of a good book. Reading can transport you to new worlds and expand your horizons.',
-    'Technology has revolutionized the way we live and work. The pace of innovation continues to accelerate every day.',
-    'The sun always shines brightest after the rain. Remember that challenges are temporary and perseverance pays off.',
+    'The concept of artificial intelligence has captivated the human imagination for decades. From the early days of simple algorithms to the complex neural networks of today, the journey has been nothing short of extraordinary. As machines learn to process information in ways that mimic the human brain, we are witnessing a transformation in how we interact with technology. The potential applications are vast, ranging from healthcare diagnostics to autonomous vehicles, promising a future where efficiency and innovation go hand in hand.',
+    'In the heart of the bustling city, amidst the cacophony of honking cars and hurried footsteps, there lies a hidden garden. It is a sanctuary of peace, where the air is filled with the scent of blooming jasmine and the gentle sound of a trickling fountain. Here, time seems to slow down, allowing one to escape the relentless pace of modern life. It serves as a reminder that even in the most chaotic of environments, moments of tranquility can be found if one knows where to look.',
+    'Software engineering is more than just writing code; it is an art form that requires creativity, logic, and a deep understanding of problem-solving. Every line of code is a building block in a larger structure, designed to perform specific tasks with precision and efficiency. The challenge lies not only in making it work but in making it maintainable and scalable. As technology evolves, so too must the skills of the engineer, constantly adapting to new languages, frameworks, and methodologies.',
+    'The universe is a vast and mysterious expanse, filled with wonders that we are only just beginning to understand. From the swirling nebulae that birth new stars to the black holes that devour everything in their path, the cosmos is a testament to the power of nature. Exploring these celestial bodies helps us answer fundamental questions about our existence and our place in the grand scheme of things. It is a journey of discovery that pushes the boundaries of human knowledge and inspires generations to look up at the stars with wonder.',
   ];
   private currentTextIndex = 0;
 
@@ -43,7 +45,7 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
   testFinished = signal(false);
   wpm = signal(0);
   accuracy = signal(0);
-  
+
   // Leveling System State
   currentLevel = signal(1);
   currentPoints = signal(0);
@@ -114,6 +116,11 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
     if (inputValue.length >= this.textToType().length) {
       // A small delay to allow the last word to be styled
       setTimeout(() => this.loadNextText(inputElement), 100);
+    } else {
+      // Auto-scroll to the active word only if space or enter was pressed
+      if (inputValue.endsWith(' ') || inputValue.endsWith('\n')) {
+        setTimeout(() => this.scrollToActiveWord(), 0);
+      }
     }
   }
 
@@ -210,7 +217,7 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Apply a length bonus: longer words are worth more than just the sum of their letters.
     const lengthBonusFactor = 1.0 + (upperWord.length - this.MIN_WORD_LENGTH_FOR_POINTS) * this.LENGTH_BONUS_PER_EXTRA_LETTER;
-    
+
     const finalScore = Math.floor(baseScore * lengthBonusFactor);
     return Math.max(1, finalScore); // Ensure a minimum of 1 point for valid words
   }
@@ -258,7 +265,7 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.accuracy.set(0);
     this.correctWordsCount = 0;
     this.totalWordsTyped = 0;
-    
+
     this.initializeWordStates();
     this.updatePointsForNextLevel(); // Recalculate points for next level based on new currentLevel
     this.logStatus();
@@ -285,5 +292,41 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnDestroy(): void {
     this.timerSubscription?.unsubscribe();
+  }
+
+  private scrollToActiveWord(): void {
+    if (!this.textDisplay || !this.wordElements) return;
+
+    const activeWordIndex = this.wordStates.findIndex(state => state() === 'active');
+    if (activeWordIndex === -1) {
+      console.log('No active word found for scrolling.');
+      return;
+    }
+
+    const wordElement = this.wordElements.get(activeWordIndex)?.nativeElement;
+    const container = this.textDisplay.nativeElement;
+
+    if (wordElement && container) {
+      const wordRect = wordElement.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      // Calculate the word's position relative to the container's viewport
+      const relativeTop = wordRect.top - containerRect.top;
+      const containerHeight = containerRect.height;
+
+      // Define safe zone: Top 60% of the container
+      // If the word is below this zone (i.e., in the bottom 40%), scroll it to center.
+      // Also scroll if it's above the viewport (negative relativeTop).
+      const threshold = containerHeight * 0.6;
+
+      if (relativeTop > threshold || relativeTop < 0) {
+        console.log(`Active word is outside safe zone (top: ${relativeTop.toFixed(0)}, threshold: ${threshold.toFixed(0)}). Scrolling to center.`);
+        wordElement.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      } else {
+        console.log(`Active word is in safe zone. No scroll needed.`);
+      }
+    } else {
+      console.log(`Could not find element for active word at index ${activeWordIndex}`);
+    }
   }
 }

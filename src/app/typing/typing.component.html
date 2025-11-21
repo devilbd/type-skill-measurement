@@ -1,20 +1,24 @@
 <div class="typing-component-root" [ngClass]="currentTheme()">
+  <header class="app-header">
+    <img src="assets/logo.png" alt="Typing Speed Test Logo" class="logo">
+    <h1>Test your typing speed</h1>
+  </header>
   <div class="stats">
     @if (!testFinished()) {
-      <div class="stat-item">
-        <span>Time Left:</span>
-        <strong>{{ timeLeft() }}s</strong>
-      </div>
+    <div class="stat-item">
+      <span>Time Left:</span>
+      <strong>{{ timeLeft() }}s</strong>
+    </div>
     }
     @if (testFinished()) {
-      <div class="stat-item">
-        <span>WPM:</span>
-        <strong>{{ wpm() }}</strong>
-      </div>
-      <div class="stat-item">
-        <span>Accuracy:</span>
-        <strong>{{ accuracy() }}%</strong>
-      </div>
+    <div class="stat-item">
+      <span>WPM:</span>
+      <strong>{{ wpm() }}</strong>
+    </div>
+    <div class="stat-item">
+      <span>Accuracy:</span>
+      <strong>{{ accuracy() }}%</strong>
+    </div>
     }
     <div class="level-status">
       <p>Level: {{ currentLevel() }}</p>
@@ -25,13 +29,14 @@
     </div>
   </div>
 
-  <div class="text-display">
+  <div class="text-display" #textDisplay>
     @for (word of words(); track $index) {
-      <span class="word" [ngClass]="wordStates[$index]()">{{ word }}</span>
+    <span class="word" #wordElement [ngClass]="wordStates[$index]()">{{ word }}</span>
     }
   </div>
 
   <div class="input-area">
-    <textarea #typingInput (input)="onInput($event)" placeholder="Start typing here..." [disabled]="testFinished()"></textarea>
+    <textarea #typingInput (input)="onInput($event)" placeholder="Start typing here..." [disabled]="testFinished()"
+      (paste)="$event.preventDefault()" (copy)="$event.preventDefault()" (cut)="$event.preventDefault()"></textarea>
   </div>
 </div>
