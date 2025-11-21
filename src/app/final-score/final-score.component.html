@@ -1,0 +1,26 @@
+<div class="modal-overlay">
+    <div class="modal-content">
+        <h2>Time's Up!</h2>
+
+        <div class="score-grid">
+            <div class="score-item">
+                <span class="label">WPM</span>
+                <span class="value">{{ wpm }}</span>
+            </div>
+            <div class="score-item">
+                <span class="label">Accuracy</span>
+                <span class="value">{{ accuracy }}%</span>
+            </div>
+            <div class="score-item">
+                <span class="label">Level</span>
+                <span class="value">{{ level }}</span>
+            </div>
+            <div class="score-item">
+                <span class="label">Points</span>
+                <span class="value">{{ points }}</span>
+            </div>
+        </div>
+
+        <button class="close-btn" (click)="onClose()">OK</button>
+    </div>
+</div>

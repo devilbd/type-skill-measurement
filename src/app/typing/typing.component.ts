@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild, ViewChildren, ElementRef, WritableSignal, computed, signal, AfterViewInit, QueryList } from '@angular/core';
+import { FinalScoreComponent } from '../final-score/final-score.component';
 import { CommonModule, NgClass } from '@angular/common';
 import { Subscription, interval } from 'rxjs';
 
@@ -7,7 +8,7 @@ type WordState = 'default' | 'correct' | 'incorrect' | 'active';
 
 @Component({
   selector: 'app-typing',
-  imports: [CommonModule, NgClass],
+  imports: [CommonModule, NgClass, FinalScoreComponent],
   templateUrl: './typing.component.html', // Assuming you'll display level/points in HTML
   styleUrl: './typing.component.scss',
 })
@@ -275,6 +276,10 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
       this.typingInput.nativeElement.value = '';
       this.typingInput.nativeElement.focus();
     });
+  }
+
+  onFinalScoreClose(): void {
+    this.resetTest();
   }
 
   /**

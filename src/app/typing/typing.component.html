@@ -1,4 +1,7 @@
 <div class="typing-component-root" [ngClass]="currentTheme()">
+  <app-final-score *ngIf="testFinished()" [wpm]="wpm()" [accuracy]="accuracy()" [level]="currentLevel()"
+    [points]="currentPoints()" (close)="onFinalScoreClose()"></app-final-score>
+
   <header class="app-header">
     <img src="assets/logo.png" alt="Typing Speed Test Logo" class="logo">
     <h1>Test your typing speed</h1>
