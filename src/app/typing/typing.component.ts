@@ -271,7 +271,10 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.logStatus();
 
     // Focus the input field after resetting
-    setTimeout(() => this.typingInput.nativeElement.focus(), 0);
+    setTimeout(() => {
+      this.typingInput.nativeElement.value = '';
+      this.typingInput.nativeElement.focus();
+    });
   }
 
   /**

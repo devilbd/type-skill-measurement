@@ -24,9 +24,11 @@
       <p>Level: {{ currentLevel() }}</p>
       <p>Points: {{ currentPoints() }} / {{ pointsForNextLevel() }}</p>
     </div>
+    @if(timerRunning()){
     <div class="action-buttons">
-      <button (click)="resetTest()" class="reset-button">Cancel Session</button>
+      <button (click)="resetTest()" class="reset-button">Reset</button>
     </div>
+    }
   </div>
 
   <div class="text-display" #textDisplay>
