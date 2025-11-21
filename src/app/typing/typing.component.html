@@ -29,11 +29,6 @@
       <p>Level: {{ currentLevel() }}</p>
       <p>Points: {{ currentPoints() }} / {{ pointsForNextLevel() }}</p>
     </div>
-    @if(timerRunning() || testFinished()){
-    <div class="action-buttons">
-      <button (click)="resetTest()" class="reset-button">Reset</button>
-    </div>
-    }
   </div>
 
   <div class="text-display" #textDisplay>
@@ -43,7 +38,10 @@
   </div>
 
   <div class="input-area">
-    <textarea #typingInput (input)="onInput($event)" placeholder="Start typing here..." [disabled]="testFinished()"
-      (paste)="$event.preventDefault()" (copy)="$event.preventDefault()" (cut)="$event.preventDefault()"></textarea>
+    <input #typingInput type="text" (input)="onInput($event)" [disabled]="testFinished()" placeholder="Type here..."
+      autocomplete="off" spellcheck="false" />
+    @if (timerRunning()){
+    <button (click)="resetTest()" class="reset-button">Reset</button>
+    }
   </div>
 </div>

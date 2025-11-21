@@ -19,7 +19,7 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
   currentTheme = signal<Theme>(this.themes[this.currentThemeIndex]);
 
   // Reference to the textarea element
-  @ViewChild('typingInput') typingInput!: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('typingInput') typingInput!: ElementRef<HTMLInputElement>;
   @ViewChild('textDisplay') textDisplay!: ElementRef<HTMLDivElement>;
   @ViewChildren('wordElement') wordElements!: QueryList<ElementRef<HTMLSpanElement>>;
 
@@ -31,6 +31,7 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
     'The universe is a vast and mysterious expanse, filled with wonders that we are only just beginning to understand. From the swirling nebulae that birth new stars to the black holes that devour everything in their path, the cosmos is a testament to the power of nature. Exploring these celestial bodies helps us answer fundamental questions about our existence and our place in the grand scheme of things. It is a journey of discovery that pushes the boundaries of human knowledge and inspires generations to look up at the stars with wonder.',
   ];
   private currentTextIndex = 0;
+  private currentWordIndex = 0;
 
   // The text the user needs to type
   textToType = signal(this.textSnippets[this.currentTextIndex]);
@@ -96,7 +97,7 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onInput(event: Event): void {
-    const inputElement = event.target as HTMLTextAreaElement;
+    const inputElement = event.target as HTMLInputElement;
     const inputValue = inputElement.value;
 
     // Start the timer on the first character typed
@@ -105,22 +106,74 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     if (this.testFinished()) {
-      // Prevent typing after the test is over
-      inputElement.value = inputValue.substring(0, inputValue.lastIndexOf(' ') + 1);
+      inputElement.value = '';
       return;
     }
 
-    this.processInput(inputValue);
-
-    // Check if the user has completed the text
-    if (inputValue.length >= this.textToType().length) {
-      // A small delay to allow the last word to be styled
-      setTimeout(() => this.loadNextText(inputElement), 100);
+    // Check if space was pressed (word completion)
+    if (inputValue.endsWith(' ')) {
+      this.processCompletedWord(inputValue.trim());
+      inputElement.value = ''; // Clear input
     } else {
-      // Auto-scroll to the active word only if space or enter was pressed
-      if (inputValue.endsWith(' ') || inputValue.endsWith('\n')) {
-        setTimeout(() => this.scrollToActiveWord(), 0);
-      }
+      this.processCurrentWord(inputValue);
+    }
+  }
+
+  private processCompletedWord(typedWord: string): void {
+    const originalWords = this.words();
+    if (this.currentWordIndex >= originalWords.length) return;
+
+    const targetWord = originalWords[this.currentWordIndex];
+    const state = this.wordStates[this.currentWordIndex];
+
+    if (typedWord === targetWord) {
+      state.set('correct');
+      this.correctWordsCount++;
+      this.totalWordsTyped++;
+
+      // Award points
+      const pointsGained = this.calculatePointsForWord(targetWord);
+      this.currentPoints.update(points => points + pointsGained);
+      this.checkLevelUp();
+    } else {
+      state.set('incorrect');
+      this.totalWordsTyped++;
+    }
+
+    // Move to next word
+    this.currentWordIndex++;
+
+    // Check if text is finished
+    if (this.currentWordIndex >= originalWords.length) {
+      // Load next text logic if needed, or just loop/reset
+      // For now, let's just load next text
+      this.loadNextText(this.typingInput.nativeElement);
+    } else {
+      // Set next word active
+      this.wordStates[this.currentWordIndex].set('active');
+      this.scrollToActiveWord();
+    }
+  }
+
+  private processCurrentWord(currentInput: string): void {
+    const originalWords = this.words();
+    if (this.currentWordIndex >= originalWords.length) return;
+
+    const targetWord = originalWords[this.currentWordIndex];
+    const state = this.wordStates[this.currentWordIndex];
+
+    // Mark as active while typing
+    if (targetWord.startsWith(currentInput)) {
+      state.set('active');
+    } else {
+      state.set('incorrect'); // Or keep active but maybe style differently? 
+      // Let's keep it 'active' but maybe we can add a 'partial-incorrect' state later if requested.
+      // For now, if it doesn't match prefix, it's technically incorrect so far, 
+      // but usually we just show it as active until space is pressed.
+      // However, the user might want immediate feedback.
+      // Let's stick to 'active' for the current word being typed, 
+      // or 'incorrect' if they made a typo.
+      state.set('incorrect');
     }
   }
 
@@ -151,53 +204,8 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.accuracy.set(Math.round(accuracyValue));
   }
 
-  private processInput(inputValue: string): void {
-    const originalWords = this.words();
-    const typedWords = inputValue.trim().split(/\s+/);
-    const currentWordIndex = typedWords.length - 1;
-
-    this.wordStates.forEach((state, index) => {
-      const originalWord = originalWords[index];
-      const typedWord = typedWords[index];
-
-      if (typedWord === undefined && index > 0) {
-        state.set('default'); // Not yet typed
-      } else if (index < currentWordIndex || (index === currentWordIndex && inputValue.endsWith(' '))) {
-        // Completed word
-        state.set(typedWord === originalWord ? 'correct' : 'incorrect');
-      } else if (index === currentWordIndex) {
-        // Active word
-        if (originalWord.startsWith(typedWord)) {
-          state.set('active');
-        } else {
-          state.set('incorrect');
-        }
-      }
-    });
-
-    // Set first word to active if input is empty
-    if (inputValue.trim() === '' && this.wordStates.length > 0) {
-      this.wordStates[0].set('active');
-    }
-
-    // Update the total correct words count only after a word is fully typed (space is pressed)
-    if (inputValue.endsWith(' ')) {
-      const lastTypedWordIndex = typedWords.length - 2; // The word just completed
-      if (lastTypedWordIndex >= 0) {
-        const originalWord = originalWords[lastTypedWordIndex];
-        this.totalWordsTyped++; // Increment total words attempted
-        const typedWord = typedWords[lastTypedWordIndex];
-        if (originalWord === typedWord) {
-          this.correctWordsCount++;
-          // Award points for the successfully typed word
-          const pointsGained = this.calculatePointsForWord(originalWord);
-          this.currentPoints.update(points => points + pointsGained);
-          console.log(`+${pointsGained} points for '${originalWord}'`);
-          this.checkLevelUp();
-        }
-      }
-    }
-  }
+  // Removed old processInput as it's replaced by processCompletedWord and processCurrentWord
+  // keeping helper methods below
 
   /**
    * Calculates the points for a given word based on letter rarity and length bonus.
@@ -235,10 +243,11 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.logStatus();
   }
 
-  private loadNextText(inputElement: HTMLTextAreaElement): void {
+  private loadNextText(inputElement: HTMLInputElement): void {
     this.currentTextIndex = (this.currentTextIndex + 1) % this.textSnippets.length;
     this.textToType.set(this.textSnippets[this.currentTextIndex]);
     inputElement.value = '';
+    this.currentWordIndex = 0;
     this.initializeWordStates();
   }
 
@@ -258,6 +267,7 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.currentLevel.set(1);
     this.currentPoints.set(0);
     this.currentTextIndex = 0;
+    this.currentWordIndex = 0;
     this.textToType.set(this.textSnippets[this.currentTextIndex]);
     this.timeLeft.set(60);
     this.timerRunning.set(false);
