@@ -24,7 +24,7 @@
       <p>Level: {{ currentLevel() }}</p>
       <p>Points: {{ currentPoints() }} / {{ pointsForNextLevel() }}</p>
     </div>
-    @if(timerRunning()){
+    @if(timerRunning() || testFinished()){
     <div class="action-buttons">
       <button (click)="resetTest()" class="reset-button">Reset</button>
     </div>

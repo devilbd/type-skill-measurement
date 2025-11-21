@@ -138,6 +138,7 @@ export class TypingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.timerRunning.set(false);
     this.testFinished.set(true);
     this.timerSubscription?.unsubscribe();
+    this.typingInput.nativeElement.blur(); // Remove focus from input
     this.calculateResults();
   }
 
